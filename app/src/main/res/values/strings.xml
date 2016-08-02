@@ -11,6 +11,7 @@
     <string name="enter_zipcode">Enter ZipCode</string>
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
+    <string name="querying_forecast_data">Querying Forecast Data. Please wait ..</string>
     <string-array name="zipcodes">
         <item>30080</item>
         <item>30031</item>

@@ -14,10 +14,10 @@ import java.util.List;
 
 public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.ViewHolder> {
 
-    private List<ZipCodeData> mValues;
+    private ArrayList<String> mValues;
     private final WeatherFragment.OnListFragmentInteractionListener mListener;
 
-    public ForecastAdapter(List<ZipCodeData> items, WeatherFragment.OnListFragmentInteractionListener listener) {
+    public ForecastAdapter(ArrayList<String> items, WeatherFragment.OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
     }
@@ -42,7 +42,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.ViewHo
                 }
             }
         });
-        holder.mZipCode.setText(holder.mItem.getZipCode());
+        holder.mZipCode.setText(holder.mItem);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.ViewHo
         return result;
     }
 
-    public void setData(ArrayList<ZipCodeData> values) {
+    public void setData(ArrayList<String> values) {
         mValues = values;
         notifyDataSetChanged();
     }
@@ -61,7 +61,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.ViewHo
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public TextView mZipCode;
-        public ZipCodeData mItem;
+        public String mItem;
 
         public ViewHolder(View view) {
             super(view);

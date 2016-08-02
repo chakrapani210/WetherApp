@@ -1,9 +1,11 @@
 package com.chakra.wuweather.vendors;
 
+import android.content.Context;
 import android.util.Log;
 
-import com.chakra.wuweather.api.Error;
 import com.chakra.wuweather.api.ForecastData;
+import com.chakra.wuweather.api.IWeatherApi;
+import com.chakra.wuweather.api.InvalidZipCodeException;
 import com.chakra.wuweather.api.ZipCodeData;
 
 import org.json.JSONArray;
@@ -23,6 +25,10 @@ public class WuWeatherApi extends AbstractWeatherApi {
     public static final String BASE_API_URI = "http://api.wunderground.com/api/";
     public static final String QUERY_URI = "/forecast/q/*.json";
 
+    public WuWeatherApi(Context context) {
+        super(context);
+    }
+
     @Override
     protected URL getUrl(String zipCode) throws IOException{
         String query = QUERY_URI.replace("*", zipCode);
@@ -31,13 +37,13 @@ public class WuWeatherApi extends AbstractWeatherApi {
         return url;
     }
 
-    protected ZipCodeData parseData(JSONObject jsonObj) {
+    public ZipCodeData parseData(JSONObject jsonObj, IWeatherApi.OnResultCallback callback) throws JSONException, InvalidZipCodeException {
         ZipCodeData result = new ZipCodeData();
         ArrayList<ForecastData> data = new ArrayList<ForecastData>();
-        try {
+
             JSONObject error = jsonObj.getJSONObject("response").optJSONObject("error");
             if(error != null) {
-                result.setError(new Error(Error.ErrorCode.INVALID_ZIP_CODE, error.getString("description")));
+                throw new InvalidZipCodeException();
             } else {
                 JSONArray forecastday = jsonObj.getJSONObject("forecast").getJSONObject("simpleforecast").getJSONArray("forecastday");
                 for (int i = 0; i < forecastday.length(); i++) {
@@ -57,10 +63,7 @@ public class WuWeatherApi extends AbstractWeatherApi {
                 }
                 result.setForecastData(data);
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            result.setError(new Error(Error.ErrorCode.DATA_NOT_AVAILABLE));
-        }
+
         return result;
     }
 }

@@ -1,5 +1,8 @@
 package com.chakra.wuweather.api;
 
+import android.app.Application;
+import android.content.Context;
+
 import com.chakra.wuweather.vendors.WuWeatherApi;
 
 import java.util.ArrayList;
@@ -12,24 +15,17 @@ public class WeatherApi implements IWeatherApi {
     public enum VendorType {
         WU_API, DARK_SKY_API, OPEN_WEATHER_API
     }
-
-    @Override
-    public ArrayList<ZipCodeData> getForecast(ArrayList<String> zipCodes) {
-        return mWeatherAoi.getForecast(zipCodes);
-    }
-
-    public WeatherApi(VendorType type) {
+    public WeatherApi(VendorType type, Context context) {
         switch (type) {
             case WU_API:
-                mWeatherAoi = new WuWeatherApi();
+                mWeatherAoi = new WuWeatherApi(context);
                 break;
             default:
                 new IllegalArgumentException(type + " is not supported for now");
         }
     }
-
     @Override
-    public ZipCodeData getForecast(String zipCode) {
-        return mWeatherAoi.getForecast(zipCode);
+    public void getForecast(String zipCode, OnResultCallback callback) {
+        mWeatherAoi.getForecast(zipCode, callback);
     }
 }

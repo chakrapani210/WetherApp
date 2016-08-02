@@ -11,7 +11,6 @@ import java.util.ArrayList;
 public class ZipCodeData implements Parcelable {
     private String mZipCode;
     private ArrayList<ForecastData> mForecastData;
-    private Error mError;
 
     public ZipCodeData() {
 
@@ -20,16 +19,6 @@ public class ZipCodeData implements Parcelable {
     public ZipCodeData(Parcel source) {
         mZipCode = source.readString();
         mForecastData = source.readArrayList(ZipCodeData.class.getClassLoader());
-        mError = source.readParcelable(Error.class.getClassLoader());
-    }
-
-
-    public Error getError() {
-        return mError;
-    }
-
-    public void setError(Error error) {
-        this.mError = error;
     }
 
     public String getZipCode() {
@@ -57,7 +46,6 @@ public class ZipCodeData implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(mZipCode);
         dest.writeList(mForecastData);
-        dest.writeParcelable(mError, flags);
     }
 
     public Creator<ZipCodeData> CREATOR = new Creator<ZipCodeData>() {

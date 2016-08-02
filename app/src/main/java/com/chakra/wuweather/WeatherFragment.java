@@ -19,8 +19,8 @@ import com.chakra.wuweather.api.ForecastData;
 import com.chakra.wuweather.api.ZipCodeData;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  * A fragment representing a list of Items.
@@ -33,13 +33,10 @@ public class WeatherFragment extends Fragment {
     private static final String TAG = WeatherFragment.class.getSimpleName();
     private OnListFragmentInteractionListener mListener;
     private ForecastAdapter mAdapter;
-    private RetainFragment mRetainFragment;
-    private ProgressDialogFragment mProgressDailogFragment;
     private RecyclerView mRecyclerView;
     private ArrayList<String> mZipCodes = new ArrayList<String>();
     private static final String ZIP_CODE_KEY = "zip_code_key";
     private static final String ZIP_CODE_PREFERANCE_FILE = "zip_code_file";
-    private ArrayList<ZipCodeData> mZipCodesData;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -58,8 +55,6 @@ public class WeatherFragment extends Fragment {
         super.onDestroy();
         mListener = null;
         mAdapter = null;
-        mRetainFragment = null;
-        mProgressDailogFragment = null;
         mRecyclerView = null;
     }
 
@@ -89,7 +84,6 @@ public class WeatherFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_forecast_list, container, false);
 
-        mRetainFragment = (RetainFragment)getFragmentManager().findFragmentByTag( RetainFragment.RETAIN_TAG);
         FloatingActionButton fab = (FloatingActionButton)view.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,29 +91,6 @@ public class WeatherFragment extends Fragment {
                 showZipcodeDialog();
             }
         });
-        mProgressDailogFragment = new ProgressDialogFragment();
-        if(mRetainFragment == null) {
-            mRetainFragment = new RetainFragment();
-            getFragmentManager().beginTransaction().add(mRetainFragment, RetainFragment.RETAIN_TAG).commit();
-        }
-        mRetainFragment.setOnDataAvailableCallBack(new RetainFragment.OnDataAvailableCallBack() {
-            @Override
-            public void onDataAvailable(ArrayList<ZipCodeData> data) {
-                Log.d(TAG, "onDateAvailable()");
-                mAdapter.setData(data);
-                mProgressDailogFragment.dismiss();
-            }
-        });
-
-        if (mRetainFragment.isTaskRunning()) {
-                Log.d(TAG, "Task is running");
-                FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
-                Fragment prev = getFragmentManager().findFragmentByTag(ProgressDialogFragment.TAG_DAILOG);
-                if (prev != null) {
-                    ft.remove(prev);
-                }
-                mProgressDailogFragment.show(getActivity().getSupportFragmentManager(), ProgressDialogFragment.TAG_DAILOG);
-        }
 
         // Set the adapter
         Log.d(TAG, "RecyclerView ***************");
@@ -127,12 +98,7 @@ public class WeatherFragment extends Fragment {
             mRecyclerView = (RecyclerView) view.findViewById(R.id.list);
             mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
 
-        mZipCodesData = mRetainFragment.getData();
-        if(mZipCodesData == null) {
-            mZipCodesData = new ArrayList<ZipCodeData>();
-            queryForecast();
-        }
-        mAdapter = new ForecastAdapter(mZipCodesData, mListener);
+        mAdapter = new ForecastAdapter(mZipCodes, mListener);
         mRecyclerView.setAdapter(mAdapter);
 
 
@@ -140,26 +106,21 @@ public class WeatherFragment extends Fragment {
     }
 
     private void showZipcodeDialog() {
-        ZipCodeDailogFragment fragment = new ZipCodeDailogFragment();
-        fragment.setListner(new ZipCodeDailogFragment.OnZipAddedListener() {
+        ZipCodeDialogFragment fragment = new ZipCodeDialogFragment();
+        fragment.setListener(new ZipCodeDialogFragment.OnZipAddedListener() {
             @Override
             public void onZipAdded(String zipCode, ZipCodeData zipCodeData) {
                 addZipCode(zipCode, zipCodeData);
             }
         });
-        fragment.show(getActivity().getSupportFragmentManager(), ZipCodeDailogFragment.TAG);
+        fragment.show(getActivity().getSupportFragmentManager(), ZipCodeDialogFragment.TAG);
     }
 
     void addZipCode(String zipCode, ZipCodeData zipCodeData) {
         mZipCodes.add(zipCode);
         SharedPreferences.Editor edit = getContext().getSharedPreferences(ZIP_CODE_PREFERANCE_FILE, Context.MODE_WORLD_WRITEABLE).edit();
         edit.putString(ZIP_CODE_KEY, listToString(mZipCodes)).commit();
-        if(zipCodeData != null && mZipCodesData != null) {
-            mZipCodesData.add(zipCodeData);
-            mAdapter.setData(mZipCodesData);
-        } else {
-            queryForecast();
-        }
+        mAdapter.setData(mZipCodes);
     }
 
     private String listToString(ArrayList<String> list) {
@@ -173,13 +134,7 @@ public class WeatherFragment extends Fragment {
         }
         return buffer.toString();
     }
-    public void queryForecast() {
-        if (mRetainFragment.isTaskRunning()) {
-            return;
-        }
-        mProgressDailogFragment.show(getFragmentManager(), ProgressDialogFragment.TAG_DAILOG);
-        mRetainFragment.queryForeCast(mZipCodes);
-    }
+
 
     @Override
     public void onAttach(Context context) {
@@ -197,9 +152,7 @@ public class WeatherFragment extends Fragment {
     }
 
     public void clean() {
-        if(mRetainFragment != null) {
-            mRetainFragment.setOnDataAvailableCallBack(null);
-        }
+
     }
 
     /**
@@ -214,24 +167,7 @@ public class WeatherFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
 
-        void onListFragmentInteraction(ZipCodeData item);
+        void onListFragmentInteraction(String zipCode);
     }
 
-
-    public static class ProgressDialogFragment extends DialogFragment {
-
-        public static final String TAG_DAILOG = "tag_dailog";
-
-        public ProgressDialogFragment() {
-
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View view = inflater.inflate(R.layout.progress_layout, container);
-
-            return view;
-        }
-    }
 }

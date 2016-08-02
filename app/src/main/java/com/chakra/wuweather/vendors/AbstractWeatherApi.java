@@ -1,7 +1,14 @@
 package com.chakra.wuweather.vendors;
 
+import android.content.Context;
 import android.util.Log;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.chakra.wuweather.api.Error;
 import com.chakra.wuweather.api.ForecastData;
 import com.chakra.wuweather.api.IWeatherApi;
@@ -20,80 +27,34 @@ import java.util.ArrayList;
 /**
  * Created by Chakrapani Chittabathina on 7/30/16.
  */
-public abstract class AbstractWeatherApi implements IWeatherApi {
+public abstract class AbstractWeatherApi implements IWeatherApi, IZipCodeDataParser {
     private static final String TAG = AbstractWeatherApi.class.getSimpleName();
+    private final Context mContext;
+    private static RequestQueue sRequestQueue;
 
-    public ZipCodeData getForecast(String zipCode) {
+    public AbstractWeatherApi(Context context) {
+        this.mContext = context;
+        if(sRequestQueue == null) {
+            sRequestQueue = Volley.newRequestQueue(mContext.getApplicationContext());
+        }
+    }
 
-        HttpURLConnection conn = null;
-        ZipCodeData data = null;
+    @Override
+    public void getForecast(String zipCode, OnResultCallback callback) {
         try {
             URL url = getUrl(zipCode);
             Log.d(TAG, "Url: " + url);
-            conn = (HttpURLConnection) url.openConnection();
-            data = readForecastData(conn);
-            data.setZipCode(zipCode);
+            getDataFromVolley(url, callback);
         } catch(IOException e) {
-            data = new ZipCodeData();
-            data.setZipCode(zipCode);
-            data.setError(new Error(Error.ErrorCode.INTERNET_UNAVAILABLE));
+            callback.onError(new Error(Error.ErrorCode.INTERNET_UNAVAILABLE));
             Log.e(TAG, "Exception:", e);
-        } finally{
-            if(conn != null) {
-                conn.disconnect();
-            }
         }
+    }
 
-        return data;
+    private void getDataFromVolley(URL url, OnResultCallback callback) {
+        ZipCodeDataRequest request = new ZipCodeDataRequest(url.toString(), this, callback);
+        sRequestQueue.add(request);
     }
 
     abstract protected URL getUrl(String zipCode) throws IOException;
-
-    @Override
-    public ArrayList<ZipCodeData> getForecast(ArrayList<String> zipCodes) {
-        ArrayList<ZipCodeData> data = new ArrayList<ZipCodeData>();
-        for (String code : zipCodes) {
-            data.add(getForecast(code));
-        }
-        return data;
-    }
-
-    private ZipCodeData readForecastData(HttpURLConnection conn) {
-        ZipCodeData error =  new ZipCodeData();
-        StringBuilder data = new StringBuilder();
-        JSONObject jsonObj = null;
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), "iso-8859-1"), 8);
-            StringBuilder sb = new StringBuilder();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-            String result = sb.toString();
-            Log.d(TAG, result);
-            try {
-                jsonObj = new JSONObject(result);
-            } catch (JSONException e) {
-                error.setError(new Error(Error.ErrorCode.DATA_NOT_AVAILABLE));
-                return error;
-            }
-        } catch (IOException e) {
-            error.setError(new Error(Error.ErrorCode.INTERNET_UNAVAILABLE));
-            return error;
-        } finally {
-            if(reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return parseData(jsonObj);
-    }
-
-    protected abstract ZipCodeData parseData(JSONObject jsonObj);
 }

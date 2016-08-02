@@ -48,7 +48,7 @@ public class RetainFragment extends Fragment {
                 new AsyncTask<ArrayList<String>, Void, ArrayList<ZipCodeData>>() {
                     @Override
                     protected ArrayList<ZipCodeData> doInBackground(ArrayList<String>... zipCode) {
-                        ArrayList<ZipCodeData> data = new WeatherApi(WeatherApi.VendorType.WU_API).getForecast(zipCode[0]);
+                        ArrayList<ZipCodeData> data = null;//new WeatherApi(WeatherApi.VendorType.WU_API).getForecast(zipCode[0]);
                         Log.d(TAG, "data: " + data);
                         return data;
                     }

@@ -31,5 +31,6 @@ dependencies {
     compile 'com.android.support:design:22.2.0'
     compile 'com.android.support:support-v4:23.+'
     //compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
+    compile 'com.android.volley:volley:1.0.0'
     compile 'com.android.support:recyclerview-v7:23.+'
 }

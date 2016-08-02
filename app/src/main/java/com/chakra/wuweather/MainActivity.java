@@ -47,12 +47,12 @@ public class MainActivity extends AppCompatActivity implements WeatherFragment.O
     }
 
     @Override
-    public void onListFragmentInteraction(ZipCodeData data) {
-        showDetailsFragment(data);
+    public void onListFragmentInteraction(String zipCode) {
+        showDetailsFragment(zipCode, null);
     }
 
-    void showDetailsFragment(ZipCodeData data) {
-        DetailsFragment fragment = DetailsFragment.getInstance(data);
+    void showDetailsFragment(String zipCode, ZipCodeData data) {
+        DetailsFragment fragment = DetailsFragment.getInstance(zipCode, null);
         changeFragment(fragment);
     }
 

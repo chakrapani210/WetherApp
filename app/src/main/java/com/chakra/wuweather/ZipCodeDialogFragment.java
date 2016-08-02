@@ -2,7 +2,6 @@ package com.chakra.wuweather;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -16,17 +15,16 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.chakra.wuweather.api.ForecastData;
+import com.chakra.wuweather.api.Error;
+import com.chakra.wuweather.api.IWeatherApi;
 import com.chakra.wuweather.api.WeatherApi;
 import com.chakra.wuweather.api.ZipCodeData;
-
-import java.util.ArrayList;
 
 /**
  * Created by f68dpim on 7/31/16.
  */
-public class ZipCodeDailogFragment extends DialogFragment{
-    public static final String TAG = ZipCodeDailogFragment.class.getSimpleName();
+public class ZipCodeDialogFragment extends DialogFragment{
+    public static final String TAG = ZipCodeDialogFragment.class.getSimpleName();
     private OnZipAddedListener mListner;
     private TextView mErrorTextView;
     private ProgressBar mProgressBar;
@@ -35,14 +33,14 @@ public class ZipCodeDailogFragment extends DialogFragment{
         void onZipAdded(String zipCode, ZipCodeData zipCodeData);
     }
 
-    public ZipCodeDailogFragment() {
+    public ZipCodeDialogFragment() {
     }
 
     public OnZipAddedListener getListner() {
         return mListner;
     }
 
-    public void setListner(OnZipAddedListener listner) {
+    public void setListener(OnZipAddedListener listner) {
         this.mListner = listner;
     }
 
@@ -66,7 +64,7 @@ public class ZipCodeDailogFragment extends DialogFragment{
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ZipCodeDailogFragment.this.dismiss();
+                ZipCodeDialogFragment.this.dismiss();
             }
         });
         builder.setTitle(R.string.enter_zipcode);
@@ -75,34 +73,22 @@ public class ZipCodeDailogFragment extends DialogFragment{
     }
 
     private void verify(final String zipCode) {
-        AsyncTask<String, Void, ZipCodeData> task = new AsyncTask<String, Void, ZipCodeData>() {
+        mProgressBar.setVisibility(View.VISIBLE);
+        new WeatherApi(WeatherApi.VendorType.WU_API,
+                getActivity().getApplicationContext()).getForecast(zipCode, new IWeatherApi.OnResultCallback() {
             @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-                mProgressBar.setVisibility(View.VISIBLE);
+            public void onSuccess(ZipCodeData data) {
+                mErrorTextView.setVisibility(View.GONE);
+                mListner.onZipAdded(zipCode, data);
+                ZipCodeDialogFragment.this.dismiss();
             }
 
             @Override
-            protected ZipCodeData doInBackground(String... params) {
-                ZipCodeData data = new WeatherApi(WeatherApi.VendorType.WU_API).getForecast(zipCode);
-                Log.d(TAG, "data: " + data);
-                return data;
-            }
-
-            @Override
-            protected void onPostExecute(ZipCodeData zipCodeData) {
+            public void onError(Error error) {
                 mProgressBar.setVisibility(View.GONE);
-                if(zipCodeData.getError() != null) {
-                    mErrorTextView.setVisibility(View.VISIBLE);
-                    mErrorTextView.setText(zipCodeData.getError().getMsg());
-                } else {
-                    mErrorTextView.setVisibility(View.GONE);
-                    mListner.onZipAdded(zipCode, zipCodeData);
-                    ZipCodeDailogFragment.this.dismiss();
-                }
+                mErrorTextView.setVisibility(View.VISIBLE);
+                mErrorTextView.setText(error.getMsg());
             }
-        };
-        task.execute(zipCode);
-
+        });
     }
 }
